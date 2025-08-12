@@ -1,0 +1,156 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: start
+    image: fifsky/drone-wechat-work
+    pull: if-not-exists
+    settings:
+      url:
+        from_secret: wecom_bot_url
+      msgtype: markdown
+      content: |
+        #### 🎉 ${DRONE_REPO} 已提交，开始执行 CI/CD
+        > Author: ${DRONE_COMMIT_AUTHOR}
+        {{ if ne .Event "tag" -}}
+        > Branch: ${DRONE_COMMIT_BRANCH}
+        {{ end -}}
+        > Event: ${DRONE_BUILD_EVENT}
+        > Runner: ${DRONE_STAGE_MACHINE}
+        > Commit: [{{ .Message }}](${DRONE_COMMIT_LINK})
+        > [点击查看](${DRONE_BUILD_LINK})
+
+  - name: restore cache
+    image: drillster/drone-volume-cache
+    pull: if-not-exists
+    depends_on:
+      - start
+    volumes:
+      - name: cache
+        path: /cache # fixed, can't be change
+    settings:
+      restore: true
+      mount: # list of folders or files to cache
+        - ./.pnpm-store
+
+  - name: install dependencies
+    pull: if-not-exists
+    image: node:latest
+    depends_on:
+      - restore cache
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@10.0.0 --activate
+      - pnpm config set store-dir .pnpm-store
+      - pnpm install
+
+  - name: rebuild cache
+    image: drillster/drone-volume-cache
+    depends_on:
+      - install dependencies
+    pull: if-not-exists
+    volumes:
+      - name: cache
+        path: /cache
+    settings:
+      rebuild: true
+      mount:
+        - ./.pnpm-store
+
+  - name: check code styles
+    image: node:latest
+    pull: if-not-exists
+    depends_on:
+      - install dependencies
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@10.0.0 --activate
+      - pnpm lint
+  - name: check types
+    image: node:latest
+    pull: if-not-exists
+    depends_on:
+      - install dependencies
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@10.0.0 --activate
+      - pnpm typecheck
+  #  - name: unit test
+  #    image: node:latest
+  #    pull: if-not-exists
+  #    depends_on:
+  #      - install dependencies
+  #    commands:
+  #      - corepack enable
+  #      - corepack prepare pnpm@10.0.0 --activate
+  #      - pnpm test
+
+  - name: build frontend
+    image: node:latest
+    pull: if-not-exists
+    depends_on:
+      - check code styles
+      - check types
+    #      - unit test
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@10.0.0 --activate
+      - pnpm config set store-dir .pnpm-store
+      - pnpm build
+
+  - name: deploy to production
+    image: drillster/drone-rsync
+    depends_on:
+      - build frontend
+    pull: if-not-exists
+    settings:
+      hosts:
+        from_secret: ssh_host_cluster_main
+      user:
+        from_secret: ssh_username
+      key:
+        from_secret: ssh_key_uozi_hk
+      source: ./dist/*
+      target: /var/www/burn-admin
+      delete: true
+    when:
+      event:
+        - push
+      branch:
+        - main
+
+  - name: notify
+    image: fifsky/drone-wechat-work
+    pull: if-not-exists
+    depends_on:
+      - build frontend
+      - deploy to production
+      - rebuild cache
+    settings:
+      url:
+        from_secret: wecom_bot_url
+      msgtype: markdown
+      content: |
+        {{ if eq .Status "success" }}
+        #### 🎉 ${DRONE_REPO} 构建成功
+        {{ else }}
+        #### ❌ ${DRONE_REPO} 构建失败
+        {{ end }}
+        > Author: ${DRONE_COMMIT_AUTHOR}
+        > Event: ${DRONE_BUILD_EVENT}
+        > Runner: ${DRONE_STAGE_MACHINE}
+        > Commit: [{{ .Message }}](${DRONE_COMMIT_LINK})
+        > [点击查看](${DRONE_BUILD_LINK})
+    when:
+      status: [success, failure]
+
+volumes:
+  - name: cache
+    host:
+      path: /tmp/pnpm_cache # host volume absolute path
+
+trigger:
+  event:
+    - push
+    - pull_request

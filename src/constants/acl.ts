@@ -1,0 +1,33 @@
+export enum Acl {
+  All = 'all',
+  User = 'user',
+  UserGroup = 'user_group',
+  EncryptionKey = 'encryption_key',
+  BurnedHistory = 'burned_history',
+  Firmware = 'firmware',
+  ServerAnalytics = 'server_analytics',
+  Device = 'device',
+  RoleTemplate = 'role_template',
+  IntelligentAgent = 'intelligent_agent',
+  OTA = 'ota',
+  Media = 'media',
+  PostAndPage = 'post_and_page',
+  AuditLog = 'audit_log',
+}
+
+export const AclMask = {
+  [Acl.All]: $pgettext('全部', 'All'),
+  [Acl.User]: $pgettext('用户管理', 'User'),
+  [Acl.UserGroup]: $pgettext('用户组管理', 'User Group'),
+  [Acl.EncryptionKey]: $pgettext('密钥管理', 'Encryption Key'),
+  [Acl.BurnedHistory]: $pgettext('烧录历史', 'Burned History'),
+  [Acl.Firmware]: $pgettext('固件管理', 'Firmware'),
+  [Acl.ServerAnalytics]: $pgettext('服务器分析', 'Server Analytics'),
+  [Acl.Device]: $pgettext('设备管理', 'Device'),
+  [Acl.RoleTemplate]: $pgettext('角色模板', 'Role Template'),
+  [Acl.IntelligentAgent]: $pgettext('智能体', 'Intelligent Agent'),
+  [Acl.OTA]: $pgettext('OTA', 'OTA'),
+  [Acl.Media]: $pgettext('媒体管理', 'Media'),
+  [Acl.PostAndPage]: $pgettext('文章和页面管理', 'Post and Page'),
+  [Acl.AuditLog]: $pgettext('审计日志', 'Audit Log'),
+}
