@@ -9,6 +9,7 @@ import { store } from '~/store'
 import App from './App.vue'
 import { serviceInterceptor } from './lib/http'
 import './style.css'
+import './styles/dark-mode.css'
 import '@uozi-admin/curd/dist/index.css'
 
 import '@uozi-admin/layout-antdv/dist/index.css'

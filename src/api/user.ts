@@ -20,12 +20,17 @@ import { useUserStore } from '~/store'
 // }
 
 export interface User extends ModelBase {
+  username: string
   name: string
   email: string
   phone: string
+  gender: string
+  student_no: string
+  role: string
   avatar_id: string
   last_active: string
   user_group: UserGroup
+  user_group_id: number
   status: number
   // avatar?: Upload
 }

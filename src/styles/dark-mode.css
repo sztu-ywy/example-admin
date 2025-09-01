@@ -1,0 +1,539 @@
+/* 全局黑暗模式样式 */
+
+/* 页面背景 */
+html.dark {
+  background: #141414;
+}
+
+html.dark body {
+  background: #141414;
+  color: #fff;
+}
+
+/* 搜索区域黑暗模式样式 - 使用更具体的选择器 */
+html.dark .search-area {
+  background: #262626 !important;
+  border-color: #303030;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+}
+
+/* 确保所有搜索区域都应用黑暗模式 */
+html.dark .search-area,
+html.dark .ant-card .search-area,
+html.dark div[class*="search"],
+html.dark .search-form,
+html.dark [class*="search-"] {
+  background: #262626 !important;
+  border: 1px solid #303030;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+/* 强制覆盖所有可能的搜索区域背景 */
+html.dark .search-area > *,
+html.dark .search-form > * {
+  background: transparent !important;
+}
+
+html.dark .search-area .ant-form-item-label > label {
+  color: #fff;
+}
+
+html.dark .search-area .ant-input {
+  background: #1f1f1f;
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .search-area .ant-input:hover {
+  border-color: #40a9ff;
+}
+
+html.dark .search-area .ant-input:focus {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2);
+}
+
+html.dark .search-area .ant-select .ant-select-selector {
+  background: #1f1f1f;
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .search-area .ant-select:hover .ant-select-selector {
+  border-color: #40a9ff;
+}
+
+html.dark .search-area .ant-select-focused .ant-select-selector {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2);
+}
+
+/* StdCurd 组件黑暗模式样式 */
+html.dark .std-curd {
+  background: #141414;
+}
+
+html.dark .std-curd .ant-card {
+  background: #1f1f1f;
+  border-color: #303030;
+}
+
+html.dark .std-curd .ant-table {
+  background: #1f1f1f;
+}
+
+html.dark .std-curd .ant-table-thead > tr > th {
+  background: #262626;
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .std-curd .ant-table-tbody > tr > td {
+  background: #1f1f1f;
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .std-curd .ant-table-tbody > tr:hover > td {
+  background: #262626;
+}
+
+html.dark .std-curd .ant-pagination {
+  color: #fff;
+}
+
+html.dark .std-curd .ant-pagination .ant-pagination-item {
+  background: #1f1f1f;
+  border-color: #303030;
+}
+
+html.dark .std-curd .ant-pagination .ant-pagination-item a {
+  color: #fff;
+}
+
+html.dark .std-curd .ant-pagination .ant-pagination-item:hover {
+  border-color: #40a9ff;
+}
+
+html.dark .std-curd .ant-pagination .ant-pagination-item-active {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+html.dark .std-curd .ant-form {
+  background: #1f1f1f;
+}
+
+html.dark .std-curd .ant-form-item-label > label {
+  color: #fff;
+}
+
+html.dark .std-curd .ant-input {
+  background: #262626;
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .std-curd .ant-input:hover {
+  border-color: #40a9ff;
+}
+
+html.dark .std-curd .ant-input:focus {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2);
+}
+
+html.dark .std-curd .ant-select {
+  color: #fff;
+}
+
+html.dark .std-curd .ant-select .ant-select-selector {
+  background: #262626;
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .std-curd .ant-select:hover .ant-select-selector {
+  border-color: #40a9ff;
+}
+
+html.dark .std-curd .ant-select-focused .ant-select-selector {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2);
+}
+
+/* 模态框黑暗模式样式 */
+html.dark .ant-modal-content {
+  background: #1f1f1f;
+}
+
+html.dark .ant-modal-header {
+  background: #1f1f1f;
+  border-color: #303030;
+}
+
+html.dark .ant-modal-title {
+  color: #fff;
+}
+
+html.dark .ant-modal-body {
+  background: #1f1f1f;
+  color: #fff;
+}
+
+html.dark .ant-modal-footer {
+  background: #1f1f1f;
+  border-color: #303030;
+}
+
+/* 下拉菜单黑暗模式样式 */
+html.dark .ant-select-dropdown {
+  background: #262626;
+  border-color: #303030;
+}
+
+html.dark .ant-select-item {
+  color: #fff;
+}
+
+html.dark .ant-select-item:hover {
+  background: #1f1f1f;
+}
+
+html.dark .ant-select-item-option-selected {
+  background: #1890ff;
+  color: #fff;
+}
+
+/* 卡片组件黑暗模式 */
+html.dark .ant-card {
+  background: #1f1f1f !important;
+  border-color: #303030;
+}
+
+html.dark .ant-card-head {
+  background: #1f1f1f;
+  border-color: #303030;
+}
+
+html.dark .ant-card-head-title {
+  color: #fff;
+}
+
+html.dark .ant-card-body {
+  background: #1f1f1f;
+  color: #fff;
+}
+
+/* 表单组件黑暗模式 */
+html.dark .ant-form {
+  background: transparent;
+}
+
+html.dark .ant-form-item-label > label {
+  color: #fff !important;
+}
+
+/* 按钮组件黑暗模式 */
+html.dark .ant-btn-default {
+  background: #262626;
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .ant-btn-default:hover {
+  background: #1f1f1f;
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+/* 日期选择器黑暗模式 */
+html.dark .ant-picker {
+  background: #1f1f1f;
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .ant-picker:hover {
+  border-color: #40a9ff;
+}
+
+html.dark .ant-picker-focused {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2);
+}
+
+/* 列表组件黑暗模式 */
+html.dark .ant-list {
+  background: transparent;
+}
+
+html.dark .ant-list-item {
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .ant-list-item-meta-title {
+  color: #fff;
+}
+
+html.dark .ant-list-item-meta-description {
+  color: #ccc;
+}
+
+/* 标签组件黑暗模式 */
+html.dark .ant-tag {
+  background: #262626;
+  border-color: #303030;
+  color: #fff;
+}
+
+/* 分页组件黑暗模式 */
+html.dark .ant-pagination .ant-pagination-prev,
+html.dark .ant-pagination .ant-pagination-next {
+  background: #1f1f1f;
+  border-color: #303030;
+  color: #fff;
+}
+
+html.dark .ant-pagination .ant-pagination-prev:hover,
+html.dark .ant-pagination .ant-pagination-next:hover {
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+/* 空状态组件黑暗模式 */
+html.dark .ant-empty {
+  color: #ccc;
+}
+
+html.dark .ant-empty-description {
+  color: #666;
+}
+
+/* 加载组件黑暗模式 */
+html.dark .ant-spin {
+  color: #fff;
+}
+
+/* 消息组件黑暗模式 */
+html.dark .ant-message {
+  color: #fff;
+}
+
+/* 日期选择器黑暗模式样式 */
+.dark .ant-picker {
+  background: #262626;
+  border-color: #303030;
+  color: #fff;
+}
+
+.dark .ant-picker:hover {
+  border-color: #40a9ff;
+}
+
+.dark .ant-picker-focused {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2);
+}
+
+.dark .ant-picker-dropdown {
+  background: #262626;
+}
+
+.dark .ant-picker-panel {
+  background: #262626;
+  border-color: #303030;
+}
+
+.dark .ant-picker-header {
+  border-color: #303030;
+}
+
+.dark .ant-picker-header button {
+  color: #fff;
+}
+
+.dark .ant-picker-content th {
+  color: #fff;
+}
+
+.dark .ant-picker-cell {
+  color: #fff;
+}
+
+.dark .ant-picker-cell:hover .ant-picker-cell-inner {
+  background: #1f1f1f;
+}
+
+.dark .ant-picker-cell-selected .ant-picker-cell-inner {
+  background: #1890ff;
+}
+
+/* 时间选择器黑暗模式样式 */
+.dark .ant-time-picker {
+  background: #262626;
+  border-color: #303030;
+  color: #fff;
+}
+
+.dark .ant-time-picker-panel {
+  background: #262626;
+  border-color: #303030;
+}
+
+.dark .ant-time-picker-panel-select {
+  background: #262626;
+}
+
+.dark .ant-time-picker-panel-select li {
+  color: #fff;
+}
+
+.dark .ant-time-picker-panel-select li:hover {
+  background: #1f1f1f;
+}
+
+.dark .ant-time-picker-panel-select li.ant-time-picker-panel-select-option-selected {
+  background: #1890ff;
+}
+
+/* 文本域黑暗模式样式 */
+.dark .ant-input {
+  background: #262626;
+  border-color: #303030;
+  color: #fff;
+}
+
+.dark .ant-input::placeholder {
+  color: #666;
+}
+
+/* 按钮黑暗模式样式调整 */
+.dark .ant-btn-default {
+  background: #262626;
+  border-color: #303030;
+  color: #fff;
+}
+
+.dark .ant-btn-default:hover {
+  background: #1f1f1f;
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+/* 标签黑暗模式样式 */
+.dark .ant-tag {
+  background: #262626;
+  border-color: #303030;
+  color: #fff;
+}
+
+/* 统计卡片黑暗模式样式 */
+.dark .ant-statistic {
+  color: #fff;
+}
+
+.dark .ant-statistic-title {
+  color: #ccc;
+}
+
+.dark .ant-statistic-content {
+  color: #fff;
+}
+
+/* 列表黑暗模式样式 */
+.dark .ant-list {
+  background: #1f1f1f;
+}
+
+.dark .ant-list-item {
+  border-color: #303030;
+  color: #fff;
+}
+
+.dark .ant-list-item-meta-title {
+  color: #fff;
+}
+
+.dark .ant-list-item-meta-description {
+  color: #ccc;
+}
+
+/* 空状态黑暗模式样式 */
+.dark .ant-empty {
+  color: #fff;
+}
+
+.dark .ant-empty-description {
+  color: #ccc;
+}
+
+/* 加载状态黑暗模式样式 */
+.dark .ant-spin {
+  color: #fff;
+}
+
+/* 消息提示黑暗模式样式 */
+.dark .ant-message {
+  color: #fff;
+}
+
+/* 通知黑暗模式样式 */
+.dark .ant-notification {
+  background: #262626;
+  border-color: #303030;
+}
+
+.dark .ant-notification-notice {
+  background: #262626;
+  border-color: #303030;
+}
+
+.dark .ant-notification-notice-message {
+  color: #fff;
+}
+
+.dark .ant-notification-notice-description {
+  color: #ccc;
+}
+
+/* 抽屉黑暗模式样式 */
+.dark .ant-drawer-content {
+  background: #1f1f1f;
+}
+
+.dark .ant-drawer-header {
+  background: #1f1f1f;
+  border-color: #303030;
+}
+
+.dark .ant-drawer-title {
+  color: #fff;
+}
+
+.dark .ant-drawer-body {
+  background: #1f1f1f;
+  color: #fff;
+}
+
+/* 确认框黑暗模式样式 */
+.dark .ant-popconfirm {
+  background: #262626;
+}
+
+.dark .ant-popconfirm-inner {
+  background: #262626;
+  border-color: #303030;
+}
+
+.dark .ant-popconfirm-message {
+  color: #fff;
+}
+
+.dark .ant-popconfirm-buttons {
+  border-color: #303030;
+}

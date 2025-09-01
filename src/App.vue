@@ -9,11 +9,29 @@ const watermarkFontColor = computed(() => {
   return settingsStore.isDark ? 'rgba(255, 255, 255, .06)' : 'rgba(0, 0, 0, .06)'
 })
 
+// 动态切换HTML的dark类
+const updateHtmlDarkClass = () => {
+  const html = document.documentElement
+  if (settingsStore.isDark) {
+    html.classList.add('dark')
+  } else {
+    html.classList.remove('dark')
+  }
+}
+
 onMounted(() => {
+  // 初始化时设置dark类
+  updateHtmlDarkClass()
+
   if (userStore.isLogin) {
     // settingsStore.fetchVoices()
     // settingsStore.fetchLLMs()
   }
+})
+
+// 监听主题变化
+watch(() => settingsStore.isDark, () => {
+  updateHtmlDarkClass()
 })
 
 watch(() => userStore.isLogin, (v) => {
