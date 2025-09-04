@@ -30,7 +30,7 @@ export interface User extends ModelBase {
   avatar_id: string
   last_active: string
   user_group: UserGroup
-  user_group_id: number
+  user_group_id: string
   status: number
   // avatar?: Upload
 }

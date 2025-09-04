@@ -31,10 +31,10 @@
           <a-input v-model:value="searchForm.name" placeholder="请输入学生姓名" />
         </a-form-item>
         <a-form-item label="学号">
-          <a-input v-model:value="searchForm.studentNo" placeholder="请输入学号" />
+          <a-input v-model:value="searchForm.student_no" placeholder="请输入学号" />
         </a-form-item>
         <a-form-item label="楼栋">
-          <a-select v-model:value="searchForm.buildingId" placeholder="请选择楼栋" style="width: 150px">
+          <a-select v-model:value="searchForm.building_id" placeholder="请选择楼栋" style="width: 150px">
             <a-select-option value="">全部楼栋</a-select-option>
             <a-select-option v-for="building in buildings" :key="building.id" :value="building.id">
               {{ building.name }}
@@ -76,8 +76,8 @@
           </a-tag>
         </template>
         <template v-else-if="column.key === 'roomInfo'">
-          <span v-if="record.bed">
-            {{ record.bed.room.building.name }} - {{ record.bed.room.roomNumber }} - {{ record.bed.bedCode }}号床
+          <span v-if="record.bed && record.bed.room && record.bed.room.building">
+            {{ record.bed.room.building.name }} - {{ record.bed.room.room_number }} - {{ record.bed.bed_code }}号床
           </span>
           <span v-else>-</span>
         </template>
@@ -117,21 +117,21 @@
         :rules="assignFormRules"
         layout="vertical"
       >
-        <a-form-item label="学生" name="userId">
+        <a-form-item label="学生" name="user_id">
           <a-select
-            v-model:value="assignFormData.userId"
+            v-model:value="assignFormData.user_id"
             placeholder="请选择学生"
             show-search
             :filter-option="filterOption"
           >
             <a-select-option v-for="student in unassignedStudents" :key="student.id" :value="student.id">
-              {{ student.name }} ({{ student.studentNo }})
+              {{ student.name }}{{ student.student_no ? ` (${student.student_no})` : '' }}
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="楼栋" name="buildingId">
-          <a-select 
-            v-model:value="assignFormData.buildingId" 
+        <a-form-item label="楼栋" name="building_id">
+          <a-select
+            v-model:value="assignFormData.building_id"
             placeholder="请选择楼栋"
             @change="onBuildingChange"
           >
@@ -140,21 +140,21 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="房间" name="roomId">
-          <a-select 
-            v-model:value="assignFormData.roomId" 
+        <a-form-item label="房间" name="room_id">
+          <a-select
+            v-model:value="assignFormData.room_id"
             placeholder="请选择房间"
             @change="onRoomChange"
           >
             <a-select-option v-for="room in availableRooms" :key="room.id" :value="room.id">
-              {{ room.roomNumber }} ({{ room.currentCount }}/{{ room.capacity }})
+              {{ room.room_number || '未知' }}号房间 ({{ room.current_count || 0 }}/{{ room.capacity || 0 }})
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="床位" name="bedId">
-          <a-select v-model:value="assignFormData.bedId" placeholder="请选择床位">
+        <a-form-item label="床位" name="bed_id">
+          <a-select v-model:value="assignFormData.bed_id" placeholder="请选择床位">
             <a-select-option v-for="bed in availableBeds" :key="bed.id" :value="bed.id">
-              {{ bed.bedCode }}号床
+              {{ bed.bed_code }}号床
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -174,30 +174,30 @@
         :model="autoAssignFormData"
         layout="vertical"
       >
-        <a-form-item label="选择学生" name="studentIds">
+        <a-form-item label="选择学生" name="student_ids">
           <a-select
-            v-model:value="autoAssignFormData.studentIds"
+            v-model:value="autoAssignFormData.student_ids"
             mode="multiple"
             placeholder="请选择要分配宿舍的学生"
             show-search
             :filter-option="filterOption"
           >
             <a-select-option v-for="student in unassignedStudents" :key="student.id" :value="student.id">
-              {{ student.name }} ({{ student.studentNo }})
+              {{ student.name }}{{ student.student_no ? ` (${student.student_no})` : '' }}
             </a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="偏好设置">
-          <a-form-item label="楼栋偏好" name="buildingId">
-            <a-select v-model:value="autoAssignFormData.preferences.buildingId" placeholder="可选择偏好楼栋">
+          <a-form-item label="楼栋偏好" name="building_id">
+            <a-select v-model:value="autoAssignFormData.preferences.building_id" placeholder="可选择偏好楼栋">
               <a-select-option value="">无偏好</a-select-option>
               <a-select-option v-for="building in buildings" :key="building.id" :value="building.id">
                 {{ building.name }}
               </a-select-option>
             </a-select>
           </a-form-item>
-          <a-form-item label="房间类型偏好" name="roomType">
-            <a-select v-model:value="autoAssignFormData.preferences.roomType" placeholder="可选择房间类型">
+          <a-form-item label="房间类型偏好" name="room_type">
+            <a-select v-model:value="autoAssignFormData.preferences.room_type" placeholder="可选择房间类型">
               <a-select-option value="">无偏好</a-select-option>
               <a-select-option value="STANDARD">标准间</a-select-option>
               <a-select-option value="SUITE">套间</a-select-option>
@@ -243,6 +243,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, ThunderboltOutlined, UserOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType, FormInstance } from 'ant-design-vue'
+import { studentApi, buildingApi, roomApi, userApi } from '~/api/dormitory'
 
 // 响应式数据
 const loading = ref(false)
@@ -260,25 +261,25 @@ const autoAssignFormRef = ref<FormInstance>()
 // 搜索表单
 const searchForm = reactive({
   name: '',
-  studentNo: '',
-  buildingId: '',
+  student_no: '',
+  building_id: '',
   status: '',
 })
 
 // 分配表单数据
 const assignFormData = reactive({
-  userId: '',
-  buildingId: '',
-  roomId: '',
-  bedId: '',
+  user_id: '',
+  building_id: '',
+  room_id: '',
+  bed_id: '',
 })
 
 // 自动分配表单数据
 const autoAssignFormData = reactive({
-  studentIds: [],
+  student_ids: [],
   preferences: {
-    buildingId: '',
-    roomType: '',
+    building_id: '',
+    room_type: '',
   },
 })
 
@@ -307,8 +308,8 @@ const columns: TableColumnsType = [
   },
   {
     title: '学号',
-    dataIndex: ['user', 'studentNo'],
-    key: 'studentNo',
+    dataIndex: ['user', 'student_no'],
+    key: 'student_no',
     width: 120,
   },
   {
@@ -350,8 +351,8 @@ const unassignedColumns: TableColumnsType = [
   },
   {
     title: '学号',
-    dataIndex: 'studentNo',
-    key: 'studentNo',
+    dataIndex: 'student_no',
+    key: 'student_no',
   },
   {
     title: '性别',
@@ -372,16 +373,16 @@ const unassignedColumns: TableColumnsType = [
 
 // 表单验证规则
 const assignFormRules = {
-  userId: [
+  user_id: [
     { required: true, message: '请选择学生', trigger: 'change' },
   ],
-  buildingId: [
+  building_id: [
     { required: true, message: '请选择楼栋', trigger: 'change' },
   ],
-  roomId: [
+  room_id: [
     { required: true, message: '请选择房间', trigger: 'change' },
   ],
-  bedId: [
+  bed_id: [
     { required: true, message: '请选择床位', trigger: 'change' },
   ],
 }
@@ -393,70 +394,49 @@ const filterOption = (input: string, option: any) => {
 
 const fetchBuildings = async () => {
   try {
-    // TODO: 调用API获取楼栋列表
+    const response = await buildingApi.getList()
+    buildings.value = response.data || []
+  } catch (error) {
+    console.error('获取楼栋列表失败:', error)
+    message.error('获取楼栋列表失败')
+    // 使用模拟数据作为后备
     buildings.value = [
       { id: 1, name: '1号楼' },
       { id: 2, name: '2号楼' },
       { id: 3, name: '3号楼' },
     ]
-  } catch (error) {
-    message.error('获取楼栋列表失败')
   }
 }
 
 const fetchUnassignedStudents = async () => {
   try {
-    // TODO: 调用API获取未分配学生列表
-    unassignedStudents.value = [
-      {
-        id: 1,
-        name: '李四',
-        studentNo: '2021002',
-        gender: 'M',
-        phone: '13800138000',
-      },
-      {
-        id: 2,
-        name: '王五',
-        studentNo: '2021003',
-        gender: 'F',
-        phone: '13800138001',
-      },
-    ]
+    const response = await studentApi.getUnassigned()
+    console.log('未分配学生API响应:', response)
+    unassignedStudents.value = response.data || []
+    console.log('未分配学生数据:', unassignedStudents.value)
   } catch (error) {
+    console.error('获取未分配学生列表失败:', error)
     message.error('获取未分配学生列表失败')
+    unassignedStudents.value = []
   }
 }
 
 const fetchData = async () => {
   loading.value = true
   try {
-    // TODO: 调用API获取数据
-    // 模拟数据
-    dataSource.value = [
-      {
-        id: 1,
-        user: {
-          name: '张三',
-          studentNo: '2021001',
-          gender: 'M',
-        },
-        bed: {
-          bedCode: '1',
-          room: {
-            roomNumber: '101',
-            building: {
-              name: '1号楼',
-            },
-          },
-        },
-        checkInDate: '2024-01-01',
-        status: 'LIVING',
-      },
-    ]
-    pagination.total = 1
+    const params = {
+      page: pagination.current,
+      page_size: pagination.pageSize,
+      ...searchForm,
+    }
+    const response = await studentApi.getList(params)
+    dataSource.value = response.data || []
+    pagination.total = response.total || 0
   } catch (error) {
+    console.error('获取数据失败:', error)
     message.error('获取数据失败')
+    dataSource.value = []
+    pagination.total = 0
   } finally {
     loading.value = false
   }
@@ -470,8 +450,8 @@ const handleSearch = () => {
 const handleReset = () => {
   Object.assign(searchForm, {
     name: '',
-    studentNo: '',
-    buildingId: '',
+    student_no: '',
+    building_id: '',
     status: '',
   })
   handleSearch()
@@ -500,10 +480,10 @@ const showUnassignedStudents = () => {
 
 const resetAssignForm = () => {
   Object.assign(assignFormData, {
-    userId: '',
-    buildingId: '',
-    roomId: '',
-    bedId: '',
+    user_id: '',
+    building_id: '',
+    room_id: '',
+    bed_id: '',
   })
   availableRooms.value = []
   availableBeds.value = []
@@ -512,29 +492,30 @@ const resetAssignForm = () => {
 
 const resetAutoAssignForm = () => {
   Object.assign(autoAssignFormData, {
-    studentIds: [],
+    student_ids: [],
     preferences: {
-      buildingId: '',
-      roomType: '',
+      building_id: '',
+      room_type: '',
     },
   })
   autoAssignFormRef.value?.resetFields()
 }
 
 const onBuildingChange = async (buildingId: string) => {
-  assignFormData.roomId = ''
-  assignFormData.bedId = ''
+  assignFormData.room_id = ''
+  assignFormData.bed_id = ''
   availableBeds.value = []
-  
+
   if (buildingId) {
     try {
-      // TODO: 调用API获取可用房间
-      availableRooms.value = [
-        { id: 1, roomNumber: '101', currentCount: 2, capacity: 4 },
-        { id: 2, roomNumber: '102', currentCount: 1, capacity: 4 },
-      ]
+      const response = await roomApi.getList({ building_id: buildingId })
+      console.log('房间API响应:', response)
+      console.log('房间数据详情:', response.data)
+      availableRooms.value = response.data || []
     } catch (error) {
+      console.error('获取可用房间失败:', error)
       message.error('获取可用房间失败')
+      availableRooms.value = []
     }
   } else {
     availableRooms.value = []
@@ -542,17 +523,31 @@ const onBuildingChange = async (buildingId: string) => {
 }
 
 const onRoomChange = async (roomId: string) => {
-  assignFormData.bedId = ''
-  
+  assignFormData.bed_id = ''
+
   if (roomId) {
     try {
-      // TODO: 调用API获取可用床位
-      availableBeds.value = [
-        { id: 1, bedCode: '1' },
-        { id: 2, bedCode: '2' },
-      ]
+      console.log('获取房间床位，房间ID:', roomId)
+
+      // 方法1：使用房间床位API
+      const response = await roomApi.getBeds(Number(roomId))
+      console.log('床位API响应:', response)
+
+      // 过滤出空闲的床位
+      const freeBeds = (response.data || []).filter(bed => bed.status === 0) // 0 = BedStatusFree
+      availableBeds.value = freeBeds
+
+      console.log('可用床位:', availableBeds.value)
+
+      if (availableBeds.value.length === 0) {
+        message.warning('该房间暂无可用床位')
+      } else {
+        message.success(`找到 ${availableBeds.value.length} 个可用床位`)
+      }
     } catch (error) {
+      console.error('获取可用床位失败:', error)
       message.error('获取可用床位失败')
+      availableBeds.value = []
     }
   } else {
     availableBeds.value = []
@@ -562,14 +557,21 @@ const onRoomChange = async (roomId: string) => {
 const handleAssignSubmit = async () => {
   try {
     await assignFormRef.value?.validate()
-    
-    // TODO: 调用API分配宿舍
+
+    const assignData = {
+      user_id: assignFormData.user_id,
+      bed_id: assignFormData.bed_id,
+      check_in_date: new Date().toISOString().split('T')[0], // 今天的日期
+    }
+
+    await studentApi.assign(assignData)
     message.success('分配成功')
     assignModalVisible.value = false
     fetchData()
     fetchUnassignedStudents()
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('分配宿舍失败:', error)
+    message.error('分配宿舍失败')
   }
 }
 
@@ -584,13 +586,19 @@ const handleAutoAssignSubmit = async () => {
       message.warning('请选择要分配的学生')
       return
     }
-    
-    // TODO: 调用API自动分配宿舍
+
+    const assignData = {
+      student_ids: autoAssignFormData.student_ids,
+      preferences: autoAssignFormData.preferences,
+    }
+
+    await studentApi.autoAssign(assignData)
     message.success('自动分配成功')
     autoAssignModalVisible.value = false
     fetchData()
     fetchUnassignedStudents()
   } catch (error) {
+    console.error('自动分配失败:', error)
     message.error('自动分配失败')
   }
 }
@@ -602,26 +610,28 @@ const handleAutoAssignCancel = () => {
 
 const handleCheckOut = async (record: any) => {
   try {
-    // TODO: 调用API退宿
+    await studentApi.checkOut(record.id)
     message.success('退宿成功')
     fetchData()
   } catch (error) {
+    console.error('退宿失败:', error)
     message.error('退宿失败')
   }
 }
 
 const handleDelete = async (id: number) => {
   try {
-    // TODO: 调用API删除数据
+    await studentApi.delete(id)
     message.success('删除成功')
     fetchData()
   } catch (error) {
+    console.error('删除失败:', error)
     message.error('删除失败')
   }
 }
 
 const quickAssign = (student: any) => {
-  assignFormData.userId = student.id
+  assignFormData.user_id = student.id
   assignModalVisible.value = true
   unassignedModalVisible.value = false
 }

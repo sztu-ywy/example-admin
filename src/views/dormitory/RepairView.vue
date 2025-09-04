@@ -72,7 +72,7 @@
         </template>
         <template v-else-if="column.key === 'roomInfo'">
           <span v-if="record.room">
-            {{ record.room.building.name }} - {{ record.room.roomNumber }}
+            {{ record.room.building.name }} - {{ record.room.room_number }}
           </span>
           <span v-else>-</span>
         </template>
@@ -131,6 +131,18 @@
             :rows="4"
           />
         </a-form-item>
+        <a-form-item label="报修学生" name="student_id">
+          <a-select
+            v-model:value="formData.student_id"
+            placeholder="请选择报修学生"
+            show-search
+            :filter-option="filterOption"
+          >
+            <a-select-option v-for="student in students" :key="student.id" :value="student.id">
+              {{ student.name }}{{ student.student_no ? ` (${student.student_no})` : '' }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
         <a-form-item label="优先级" name="priority">
           <a-select v-model:value="formData.priority" placeholder="请选择优先级">
             <a-select-option value="LOW">低</a-select-option>
@@ -139,9 +151,9 @@
             <a-select-option value="URGENT">紧急</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="楼栋" name="buildingId">
-          <a-select 
-            v-model:value="formData.buildingId" 
+        <a-form-item label="楼栋" name="building_id">
+          <a-select
+            v-model:value="formData.building_id"
             placeholder="请选择楼栋"
             @change="onBuildingChange"
           >
@@ -150,10 +162,10 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="房间" name="roomId">
-          <a-select v-model:value="formData.roomId" placeholder="请选择房间">
+        <a-form-item label="房间" name="room_id">
+          <a-select v-model:value="formData.room_id" placeholder="请选择房间">
             <a-select-option v-for="room in availableRooms" :key="room.id" :value="room.id">
-              {{ room.roomNumber }}
+              {{ room.room_number || '未知' }}号房间 ({{ getTypeText(room.type || 'STANDARD') }})
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -173,8 +185,8 @@
         :rules="assignFormRules"
         layout="vertical"
       >
-        <a-form-item label="维修人员" name="staffId">
-          <a-select v-model:value="assignFormData.staffId" placeholder="请选择维修人员">
+        <a-form-item label="维修人员" name="staff_id">
+          <a-select v-model:value="assignFormData.staff_id" placeholder="请选择维修人员">
             <a-select-option v-for="staff in repairStaff" :key="staff.id" :value="staff.id">
               {{ staff.name }} ({{ staff.phone }})
             </a-select-option>
@@ -242,7 +254,7 @@
           </a-descriptions-item>
           <a-descriptions-item label="提交人">{{ currentRepair.student?.user?.name }}</a-descriptions-item>
           <a-descriptions-item label="房间">
-            {{ currentRepair.room?.building?.name }} - {{ currentRepair.room?.roomNumber }}
+            {{ currentRepair.room?.building?.name }} - {{ currentRepair.room?.room_number }}
           </a-descriptions-item>
           <a-descriptions-item label="维修人员">
             {{ currentRepair.assignTo?.name || '未分配' }}
@@ -287,12 +299,18 @@ import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, ClockCircleOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType, FormInstance } from 'ant-design-vue'
+import { repairApi, buildingApi, roomApi, userApi } from '~/api/dormitory'
+import { useUserStore } from '~/store'
+
+// 用户信息
+const userStore = useUserStore()
 
 // 响应式数据
 const loading = ref(false)
 const dataSource = ref([])
 const buildings = ref([])
 const availableRooms = ref([])
+const students = ref([])
 const repairStaff = ref([])
 const repairComments = ref([])
 const modalVisible = ref(false)
@@ -320,13 +338,14 @@ const formData = reactive({
   title: '',
   description: '',
   priority: 'MEDIUM',
-  buildingId: '',
-  roomId: '',
+  building_id: '',
+  room_id: '',
+  student_id: '', // 管理员创建工单时需要指定学生ID
 })
 
 // 分配表单数据
 const assignFormData = reactive({
-  staffId: '',
+  staff_id: '',
   remark: '',
 })
 
@@ -414,13 +433,16 @@ const formRules = {
   priority: [
     { required: true, message: '请选择优先级', trigger: 'change' },
   ],
-  roomId: [
+  room_id: [
     { required: true, message: '请选择房间', trigger: 'change' },
+  ],
+  student_id: [
+    { required: true, message: '请选择报修学生', trigger: 'change' },
   ],
 }
 
 const assignFormRules = {
-  staffId: [
+  staff_id: [
     { required: true, message: '请选择维修人员', trigger: 'change' },
   ],
 }
@@ -463,6 +485,10 @@ const getPriorityColor = (priority: string) => {
   return colors[priority] || 'default'
 }
 
+const filterOption = (input: string, option: any) => {
+  return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+}
+
 const getPriorityText = (priority: string) => {
   const texts = {
     LOW: '低',
@@ -473,61 +499,63 @@ const getPriorityText = (priority: string) => {
   return texts[priority] || '未知'
 }
 
+const getTypeText = (type: string) => {
+  const types = {
+    STANDARD: '标准间',
+    SUITE: '套间',
+  }
+  return types[type] || '标准间'
+}
+
 const fetchBuildings = async () => {
   try {
-    // TODO: 调用API获取楼栋列表
-    buildings.value = [
-      { id: 1, name: '1号楼' },
-      { id: 2, name: '2号楼' },
-      { id: 3, name: '3号楼' },
-    ]
+    const response = await buildingApi.getList()
+    buildings.value = response.data || []
   } catch (error) {
+    console.error('获取楼栋列表失败:', error)
     message.error('获取楼栋列表失败')
+    buildings.value = []
+  }
+}
+
+const fetchStudents = async () => {
+  try {
+    const response = await userApi.getStudents()
+    students.value = response.data || []
+  } catch (error) {
+    console.error('获取学生列表失败:', error)
+    message.error('获取学生列表失败')
+    students.value = []
   }
 }
 
 const fetchRepairStaff = async () => {
   try {
-    // TODO: 调用API获取维修人员列表
-    repairStaff.value = [
-      { id: 1, name: '维修师傅A', phone: '13800138000' },
-      { id: 2, name: '维修师傅B', phone: '13800138001' },
-    ]
+    const response = await userApi.getRepairStaff()
+    repairStaff.value = response.data || []
   } catch (error) {
+    console.error('获取维修人员列表失败:', error)
     message.error('获取维修人员列表失败')
+    repairStaff.value = []
   }
 }
 
 const fetchData = async () => {
   loading.value = true
   try {
-    // TODO: 调用API获取数据
-    // 模拟数据
-    dataSource.value = [
-      {
-        id: 1,
-        title: '水龙头漏水',
-        description: '宿舍水龙头一直在滴水，需要维修',
-        priority: 'MEDIUM',
-        status: 'PENDING',
-        student: {
-          user: {
-            name: '张三',
-          },
-        },
-        room: {
-          roomNumber: '101',
-          building: {
-            name: '1号楼',
-          },
-        },
-        assignTo: null,
-        createdAt: '2024-01-01 10:00:00',
-      },
-    ]
-    pagination.total = 1
+    const params = {
+      page: pagination.current,
+      page_size: pagination.pageSize,
+      ...searchForm,
+    }
+    const response = await repairApi.getList(params)
+    dataSource.value = response.data || []
+    pagination.total = response.total || 0
   } catch (error) {
+    console.error('获取数据失败:', error)
     message.error('获取数据失败')
+    dataSource.value = []
+    pagination.total = 0
   } finally {
     loading.value = false
   }
@@ -578,46 +606,103 @@ const resetForm = () => {
     title: '',
     description: '',
     priority: 'MEDIUM',
-    buildingId: '',
-    roomId: '',
+    building_id: '',
+    room_id: '',
+    student_id: '',
   })
   availableRooms.value = []
   formRef.value?.resetFields()
 }
 
 const onBuildingChange = async (buildingId: string) => {
-  formData.roomId = ''
-  
+  formData.room_id = ''
+
   if (buildingId) {
     try {
-      // TODO: 调用API获取房间列表
-      availableRooms.value = [
-        { id: 1, roomNumber: '101' },
-        { id: 2, roomNumber: '102' },
-      ]
+      console.log('正在获取楼栋房间列表，楼栋ID:', buildingId)
+
+      // 方法1：使用通用列表接口
+      console.log('尝试方法1: roomApi.getList({ building_id: buildingId })')
+      const response = await roomApi.getList({ building_id: buildingId })
+      console.log('方法1响应:', response)
+      console.log('房间数据详情:', response.data)
+
+      availableRooms.value = response.data || []
+
+      // 如果没有数据，尝试使用专门的方法
+      if (!availableRooms.value.length) {
+        console.log('方法1无数据，尝试方法2: roomApi.getByBuilding(buildingId)')
+        const response2 = await roomApi.getByBuilding(Number(buildingId))
+        console.log('方法2响应:', response2)
+        availableRooms.value = response2.data || []
+      }
+
+      console.log('最终获取到的房间列表:', availableRooms.value)
+
+      if (availableRooms.value.length === 0) {
+        message.warning(`楼栋 ${buildingId} 下暂无房间数据`)
+      } else {
+        message.success(`成功获取到 ${availableRooms.value.length} 个房间`)
+      }
     } catch (error) {
+      console.error('获取房间列表失败:', error)
       message.error('获取房间列表失败')
+      availableRooms.value = []
     }
   } else {
     availableRooms.value = []
+    console.log('清空房间列表')
   }
 }
 
 const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
-    
-    // TODO: 调用API提交数据
+
+    const submitData: any = {
+      title: formData.title,
+      description: formData.description,
+      priority: formData.priority,
+      room_id: formData.room_id, // 注意：后端使用snake_case
+    }
+
+    // 如果是创建工单，需要添加 student_id
+    if (!editingId.value) {
+      // 根据用户角色决定如何设置 student_id
+      if (userStore.user?.role === 'STUDENT') {
+        // 学生用户：使用自己的ID作为student_id
+        submitData.student_id = userStore.user.id
+      } else {
+        // 管理员用户：需要指定student_id（这里可以添加一个学生选择字段）
+        // 暂时使用一个默认值，实际应该让管理员选择学生
+        if (!formData.student_id) {
+          message.error('管理员创建工单时必须指定学生')
+          return
+        }
+        submitData.student_id = formData.student_id
+      }
+    }
+
     if (editingId.value) {
+      // 更新工单
+      await repairApi.update(editingId.value, submitData)
       message.success('更新成功')
     } else {
+      // 创建工单
+      console.log('创建工单数据:', submitData)
+      await repairApi.create(submitData)
       message.success('创建成功')
     }
-    
+
     modalVisible.value = false
     fetchData()
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('提交失败:', error)
+    if (error.response?.data?.message) {
+      message.error(error.response.data.message)
+    } else {
+      message.error(editingId.value ? '更新失败' : '创建失败')
+    }
   }
 }
 
@@ -629,7 +714,7 @@ const handleCancel = () => {
 const showAssignModal = (record: any) => {
   currentRepair.value = record
   Object.assign(assignFormData, {
-    staffId: '',
+    staff_id: '',
     remark: '',
   })
   assignModalVisible.value = true
@@ -638,13 +723,19 @@ const showAssignModal = (record: any) => {
 const handleAssignSubmit = async () => {
   try {
     await assignFormRef.value?.validate()
-    
-    // TODO: 调用API分配维修人员
+
+    const assignData = {
+      staff_id: assignFormData.staff_id,
+      remark: assignFormData.remark,
+    }
+
+    await repairApi.assign(currentRepair.value.id, assignData)
     message.success('分配成功')
     assignModalVisible.value = false
     fetchData()
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('分配失败:', error)
+    message.error('分配失败')
   }
 }
 
@@ -664,13 +755,19 @@ const showStatusModal = (record: any) => {
 const handleStatusSubmit = async () => {
   try {
     await statusFormRef.value?.validate()
-    
-    // TODO: 调用API更新状态
+
+    const statusData = {
+      status: statusFormData.status,
+      remark: statusFormData.remark,
+    }
+
+    await repairApi.updateStatus(currentRepair.value?.id, statusData)
     message.success('状态更新成功')
     statusModalVisible.value = false
     fetchData()
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('状态更新失败:', error)
+    message.error('状态更新失败')
   }
 }
 
@@ -680,21 +777,16 @@ const handleStatusCancel = () => {
 
 const showDetail = async (record: any) => {
   currentRepair.value = record
-  
+
   try {
-    // TODO: 调用API获取工单留言
-    repairComments.value = [
-      {
-        id: 1,
-        content: '已安排维修人员前往处理',
-        user: { name: '管理员' },
-        createdAt: '2024-01-01 11:00:00',
-      },
-    ]
+    const response = await repairApi.getComments(record.id)
+    repairComments.value = response.data || []
   } catch (error) {
+    console.error('获取工单留言失败:', error)
     message.error('获取工单留言失败')
+    repairComments.value = []
   }
-  
+
   detailModalVisible.value = true
 }
 
@@ -703,23 +795,30 @@ const addComment = async () => {
     message.warning('请输入留言内容')
     return
   }
-  
+
   try {
-    // TODO: 调用API添加留言
+    const commentData = {
+      content: newComment.value.trim(),
+    }
+
+    await repairApi.addComment(currentRepair.value?.id, commentData)
     message.success('留言添加成功')
     newComment.value = ''
     // 重新获取留言列表
+    showDetail(currentRepair.value)
   } catch (error) {
+    console.error('添加留言失败:', error)
     message.error('添加留言失败')
   }
 }
 
 const handleDelete = async (id: number) => {
   try {
-    // TODO: 调用API删除数据
+    await repairApi.delete(id)
     message.success('删除成功')
     fetchData()
   } catch (error) {
+    console.error('删除失败:', error)
     message.error('删除失败')
   }
 }
@@ -727,6 +826,7 @@ const handleDelete = async (id: number) => {
 // 生命周期
 onMounted(() => {
   fetchBuildings()
+  fetchStudents()
   fetchRepairStaff()
   fetchData()
 })

@@ -17,7 +17,7 @@
           <a-input v-model:value="searchForm.name" placeholder="请输入楼栋名称" />
         </a-form-item>
         <a-form-item label="性别类型">
-          <a-select v-model:value="searchForm.genderType" placeholder="请选择性别类型" style="width: 120px">
+          <a-select v-model:value="searchForm.gender_type" placeholder="请选择性别类型" style="width: 120px">
             <a-select-option value="">全部</a-select-option>
             <a-select-option value="M">男寝</a-select-option>
             <a-select-option value="F">女寝</a-select-option>
@@ -41,9 +41,9 @@
       row-key="id"
     >
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'genderType'">
-          <a-tag :color="getGenderTypeColor(record.genderType)">
-            {{ getGenderTypeText(record.genderType) }}
+        <template v-if="column.key === 'gender_type'">
+          <a-tag :color="getGenderTypeColor(record.gender_type)">
+            {{ getGenderTypeText(record.gender_type) }}
           </a-tag>
         </template>
         <template v-else-if="column.key === 'action'">
@@ -77,16 +77,16 @@
         <a-form-item label="楼栋名称" name="name">
           <a-input v-model:value="formData.name" placeholder="请输入楼栋名称" />
         </a-form-item>
-        <a-form-item label="性别类型" name="genderType">
-          <a-select v-model:value="formData.genderType" placeholder="请选择性别类型">
+        <a-form-item label="性别类型" name="gender_type">
+          <a-select v-model:value="formData.gender_type" placeholder="请选择性别类型">
             <a-select-option value="M">男寝</a-select-option>
             <a-select-option value="F">女寝</a-select-option>
             <a-select-option value="U">混合</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="总楼层数" name="totalFloors">
+        <a-form-item label="总楼层数" name="total_floors">
           <a-input-number
-            v-model:value="formData.totalFloors"
+            v-model:value="formData.total_floors"
             :min="1"
             :max="50"
             placeholder="请输入总楼层数"
@@ -147,6 +147,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType, FormInstance } from 'ant-design-vue'
+import { buildingApi } from '~/api/dormitory'
 
 // 响应式数据
 const loading = ref(false)
@@ -161,14 +162,14 @@ const statisticsData = ref(null)
 // 搜索表单
 const searchForm = reactive({
   name: '',
-  genderType: '',
+  gender_type: '',
 })
 
 // 表单数据
 const formData = reactive({
   name: '',
-  genderType: '',
-  totalFloors: 1,
+  gender_type: '',
+  total_floors: 1,
   description: '',
 })
 
@@ -196,14 +197,14 @@ const columns: TableColumnsType = [
   },
   {
     title: '性别类型',
-    dataIndex: 'genderType',
-    key: 'genderType',
+    dataIndex: 'gender_type',
+    key: 'gender_type',
     width: 100,
   },
   {
     title: '总楼层数',
-    dataIndex: 'totalFloors',
-    key: 'totalFloors',
+    dataIndex: 'total_floors',
+    key: 'total_floors',
     width: 100,
   },
   {
@@ -231,10 +232,10 @@ const formRules = {
     { required: true, message: '请输入楼栋名称', trigger: 'blur' },
     { min: 2, max: 50, message: '楼栋名称长度在 2 到 50 个字符', trigger: 'blur' },
   ],
-  genderType: [
+  gender_type: [
     { required: true, message: '请选择性别类型', trigger: 'change' },
   ],
-  totalFloors: [
+  total_floors: [
     { required: true, message: '请输入总楼层数', trigger: 'blur' },
   ],
 }
@@ -253,37 +254,19 @@ const getGenderTypeText = (type: string) => {
 const fetchData = async () => {
   loading.value = true
   try {
-    // TODO: 调用API获取数据
-    // const response = await buildingApi.getList({
-    //   page: pagination.current,
-    //   pageSize: pagination.pageSize,
-    //   ...searchForm,
-    // })
-    // dataSource.value = response.data
-    // pagination.total = response.total
-    
-    // 模拟数据
-    dataSource.value = [
-      {
-        id: 1,
-        name: '1号楼',
-        genderType: 'M',
-        totalFloors: 6,
-        description: '男生宿舍楼',
-        createdAt: '2024-01-01 10:00:00',
-      },
-      {
-        id: 2,
-        name: '2号楼',
-        genderType: 'F',
-        totalFloors: 6,
-        description: '女生宿舍楼',
-        createdAt: '2024-01-01 10:00:00',
-      },
-    ]
-    pagination.total = 2
+    const params = {
+      page: pagination.current,
+      page_size: pagination.pageSize,
+      ...searchForm,
+    }
+    const response = await buildingApi.getList(params)
+    dataSource.value = response.data || []
+    pagination.total = response.total || 0
   } catch (error) {
+    console.error('获取数据失败:', error)
     message.error('获取数据失败')
+    dataSource.value = []
+    pagination.total = 0
   } finally {
     loading.value = false
   }
@@ -297,7 +280,7 @@ const handleSearch = () => {
 const handleReset = () => {
   Object.assign(searchForm, {
     name: '',
-    genderType: '',
+    gender_type: '',
   })
   handleSearch()
 }
@@ -335,20 +318,20 @@ const resetForm = () => {
 const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
-    
-    // TODO: 调用API提交数据
+
     if (editingId.value) {
-      // await buildingApi.update(editingId.value, formData)
+      await buildingApi.update(editingId.value, formData)
       message.success('更新成功')
     } else {
-      // await buildingApi.create(formData)
+      await buildingApi.create(formData)
       message.success('创建成功')
     }
-    
+
     modalVisible.value = false
     fetchData()
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('提交失败:', error)
+    message.error(editingId.value ? '更新失败' : '创建失败')
   }
 }
 
@@ -359,32 +342,22 @@ const handleCancel = () => {
 
 const handleDelete = async (id: number) => {
   try {
-    // TODO: 调用API删除数据
-    // await buildingApi.delete(id)
+    await buildingApi.delete(id)
     message.success('删除成功')
     fetchData()
   } catch (error) {
+    console.error('删除失败:', error)
     message.error('删除失败')
   }
 }
 
 const showStatistics = async (record: any) => {
   try {
-    // TODO: 调用API获取统计数据
-    // const response = await buildingApi.getStatistics(record.id)
-    // statisticsData.value = response
-    
-    // 模拟数据
-    statisticsData.value = {
-      totalRooms: 60,
-      totalBeds: 240,
-      occupiedBeds: 180,
-      freeBeds: 60,
-      occupancyRate: 75.0,
-    }
-    
+    const response = await buildingApi.getStatistics(record.id)
+    statisticsData.value = response.data
     statisticsVisible.value = true
   } catch (error) {
+    console.error('获取统计数据失败:', error)
     message.error('获取统计数据失败')
   }
 }

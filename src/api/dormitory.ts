@@ -13,17 +13,17 @@ export const buildingApi = {
   },
 
   // 更新楼栋
-  update: (id: number, data: any) => {
+  update: (id: string, data: any) => {
     return http.put(`/admin/buildings/${id}`, data)
   },
 
   // 删除楼栋
-  delete: (id: number) => {
+  delete: (id: string) => {
     return http.delete(`/admin/buildings/${id}`)
   },
 
   // 获取楼栋统计信息
-  getStatistics: (id: number) => {
+  getStatistics: (id: string) => {
     return http.get(`/admin/buildings/${id}/statistics`)
   },
 }
@@ -41,28 +41,33 @@ export const roomApi = {
   },
 
   // 更新房间
-  update: (id: number, data: any) => {
+  update: (id: string, data: any) => {
     return http.put(`/admin/rooms/${id}`, data)
   },
 
   // 删除房间
-  delete: (id: number) => {
+  delete: (id: string) => {
     return http.delete(`/admin/rooms/${id}`)
   },
 
   // 获取房间床位列表
-  getBeds: (id: number) => {
+  getBeds: (id: string) => {
     return http.get(`/admin/rooms/${id}/beds`)
   },
 
   // 获取房间学生列表
-  getStudents: (id: number) => {
+  getStudents: (id: string) => {
     return http.get(`/admin/rooms/${id}/students`)
   },
 
   // 根据楼栋获取房间列表
-  getByBuilding: (buildingId: number) => {
+  getByBuilding: (buildingId: string) => {
     return http.get(`/admin/rooms`, { params: { buildingId } })
+  },
+
+  // 初始化房间床位
+  initializeBeds: (id: string) => {
+    return http.post(`/admin/rooms/${id}/initialize-beds`)
   },
 }
 
@@ -89,7 +94,7 @@ export const studentApi = {
   },
 
   // 学生退宿
-  checkOut: (id: number) => {
+  checkOut: (id: string) => {
     return http.delete(`/admin/students/${id}`)
   },
 
@@ -99,12 +104,12 @@ export const studentApi = {
   },
 
   // 更新住宿信息
-  update: (id: number, data: any) => {
+  update: (id: string, data: any) => {
     return http.put(`/admin/students/${id}`, data)
   },
 
   // 删除住宿记录
-  delete: (id: number) => {
+  delete: (id: string) => {
     return http.delete(`/admin/students/${id}`)
   },
 }
@@ -122,22 +127,22 @@ export const repairApi = {
   },
 
   // 更新工单
-  update: (id: number, data: any) => {
+  update: (id: string, data: any) => {
     return http.put(`/admin/repairs/${id}`, data)
   },
 
   // 删除工单
-  delete: (id: number) => {
+  delete: (id: string) => {
     return http.delete(`/admin/repairs/${id}`)
   },
 
   // 分配维修人员
-  assign: (id: number, data: any) => {
+  assign: (id: string, data: any) => {
     return http.put(`/admin/repairs/${id}/assign`, data)
   },
 
   // 更新工单状态
-  updateStatus: (id: number, data: any) => {
+  updateStatus: (id: string, data: any) => {
     return http.put(`/admin/repairs/${id}/status`, data)
   },
 
@@ -147,12 +152,12 @@ export const repairApi = {
   },
 
   // 添加工单留言
-  addComment: (id: number, data: any) => {
+  addComment: (id: string, data: any) => {
     return http.post(`/admin/repairs/${id}/comments`, data)
   },
 
   // 获取工单留言
-  getComments: (id: number) => {
+  getComments: (id: string) => {
     return http.get(`/admin/repairs/${id}/comments`)
   },
 }
@@ -170,22 +175,22 @@ export const visitApi = {
   },
 
   // 更新访客信息
-  update: (id: number, data: any) => {
+  update: (id: string, data: any) => {
     return http.put(`/admin/visits/${id}`, data)
   },
 
   // 删除访客记录
-  delete: (id: number) => {
+  delete: (id: string) => {
     return http.delete(`/admin/visits/${id}`)
   },
 
   // 审核通过
-  approve: (id: number, data?: any) => {
+  approve: (id: string, data?: any) => {
     return http.put(`/admin/visits/${id}/approve`, data)
   },
 
   // 审核拒绝
-  reject: (id: number, data: any) => {
+  reject: (id: string, data: any) => {
     return http.put(`/admin/visits/${id}/reject`, data)
   },
 
@@ -195,13 +200,18 @@ export const visitApi = {
   },
 
   // 结束访问
-  finish: (id: number) => {
+  finish: (id: string) => {
     return http.put(`/admin/visits/${id}/finish`)
   },
 }
 
 // 用户管理 API (扩展)
 export const userApi = {
+  // 获取当前用户信息
+  getCurrentUser: () => {
+    return http.get('/admin/user')
+  },
+
   // 获取维修人员列表
   getRepairStaff: () => {
     return http.get('/admin/users', { params: { role: 'REPAIR_STAFF' } })
@@ -227,7 +237,7 @@ export const bedApi = {
 
   // 根据房间获取床位
   getByRoom: (roomId: number) => {
-    return http.get(`/admin/beds`, { params: { roomId } })
+    return http.get(`/admin/beds`, { params: { room_id: roomId } })
   },
 }
 
@@ -239,7 +249,7 @@ export const statisticsApi = {
   },
 
   // 获取楼栋统计数据
-  getBuilding: (id: number) => {
+  getBuilding: (id: string) => {
     return http.get(`/admin/statistics/building/${id}`)
   },
 

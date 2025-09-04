@@ -258,6 +258,7 @@ import { message } from 'ant-design-vue'
 import { PlusOutlined, ClockCircleOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType, FormInstance } from 'ant-design-vue'
 import dayjs from 'dayjs'
+import { visitApi } from '~/api/dormitory'
 
 // 响应式数据
 const loading = ref(false)
@@ -435,32 +436,19 @@ const getRelationshipText = (relationship: string) => {
 const fetchData = async () => {
   loading.value = true
   try {
-    // TODO: 调用API获取数据
-    // 模拟数据
-    dataSource.value = [
-      {
-        id: 1,
-        visitorName: '张父',
-        visitorPhone: '13800138000',
-        visitorIdCard: '110101199001011234',
-        relationship: 'PARENT',
-        visitDate: '2024-01-15',
-        visitStartTime: '14:00',
-        visitEndTime: '16:00',
-        purpose: '看望孩子，了解学习生活情况',
-        status: 'PENDING',
-        student: {
-          user: {
-            name: '张三',
-            studentNo: '2021001',
-          },
-        },
-        createdAt: '2024-01-10 10:00:00',
-      },
-    ]
-    pagination.total = 1
+    const params = {
+      page: pagination.current,
+      page_size: pagination.pageSize,
+      ...searchForm,
+    }
+    const response = await visitApi.getList(params)
+    dataSource.value = response.data || []
+    pagination.total = response.total || 0
   } catch (error) {
+    console.error('获取数据失败:', error)
     message.error('获取数据失败')
+    dataSource.value = []
+    pagination.total = 0
   } finally {
     loading.value = false
   }
@@ -537,10 +525,11 @@ const handleSubmit = async () => {
       }
     }
     
-    // TODO: 调用API提交数据
     if (editingId.value) {
+      await visitApi.update(editingId.value, formData)
       message.success('更新成功')
     } else {
+      await visitApi.create(formData)
       message.success('登记成功')
     }
     
@@ -558,10 +547,11 @@ const handleCancel = () => {
 
 const handleApprove = async (record: any) => {
   try {
-    // TODO: 调用API审核通过
+    await visitApi.approve(record.id)
     message.success('审核通过')
     fetchData()
   } catch (error) {
+    console.error('审核失败:', error)
     message.error('审核失败')
   }
 }
@@ -576,7 +566,11 @@ const handleRejectSubmit = async () => {
   try {
     await rejectFormRef.value?.validate()
     
-    // TODO: 调用API拒绝访问
+    const rejectData = {
+      remark: rejectFormData.remark,
+    }
+
+    await visitApi.reject(currentVisit.value?.id, rejectData)
     message.success('已拒绝访问申请')
     rejectModalVisible.value = false
     fetchData()
@@ -591,10 +585,11 @@ const handleRejectCancel = () => {
 
 const handleFinish = async (record: any) => {
   try {
-    // TODO: 调用API结束访问
+    await visitApi.finish(record.id)
     message.success('访问已结束')
     fetchData()
   } catch (error) {
+    console.error('操作失败:', error)
     message.error('操作失败')
   }
 }
@@ -606,10 +601,11 @@ const showDetail = (record: any) => {
 
 const handleDelete = async (id: number) => {
   try {
-    // TODO: 调用API删除数据
+    await visitApi.delete(id)
     message.success('删除成功')
     fetchData()
   } catch (error) {
+    console.error('删除失败:', error)
     message.error('删除失败')
   }
 }

@@ -14,7 +14,7 @@
     <div class="search-area">
       <a-form layout="inline" :model="searchForm">
         <a-form-item label="楼栋">
-          <a-select v-model:value="searchForm.buildingId" placeholder="请选择楼栋" style="width: 150px">
+          <a-select v-model:value="searchForm.building_id" placeholder="请选择楼栋" style="width: 150px">
             <a-select-option value="">全部楼栋</a-select-option>
             <a-select-option v-for="building in buildings" :key="building.id" :value="building.id">
               {{ building.name }}
@@ -22,7 +22,7 @@
           </a-select>
         </a-form-item>
         <a-form-item label="房间号">
-          <a-input v-model:value="searchForm.roomNumber" placeholder="请输入房间号" />
+          <a-input v-model:value="searchForm.room_number" placeholder="请输入房间号" />
         </a-form-item>
         <a-form-item label="房间类型">
           <a-select v-model:value="searchForm.type" placeholder="请选择房间类型" style="width: 120px">
@@ -67,8 +67,8 @@
         </template>
         <template v-else-if="column.key === 'occupancy'">
           <a-progress
-            :percent="(record.currentCount / record.capacity) * 100"
-            :format="() => `${record.currentCount}/${record.capacity}`"
+            :percent="((record.current_count || 0) / (record.capacity || 1)) * 100"
+            :format="() => `${record.current_count || 0}/${record.capacity || 0}`"
             size="small"
           />
         </template>
@@ -76,6 +76,7 @@
           <a-space>
             <a-button type="link" size="small" @click="showBeds(record)">床位</a-button>
             <a-button type="link" size="small" @click="showStudents(record)">学生</a-button>
+            <a-button type="link" size="small" @click="initializeBeds(record)">初始化床位</a-button>
             <a-button type="link" size="small" @click="showEditModal(record)">编辑</a-button>
             <a-popconfirm
               title="确定要删除这个房间吗？"
@@ -101,15 +102,15 @@
         :rules="formRules"
         layout="vertical"
       >
-        <a-form-item label="所属楼栋" name="buildingId">
-          <a-select v-model:value="formData.buildingId" placeholder="请选择楼栋">
+        <a-form-item label="所属楼栋" name="building_id">
+          <a-select v-model:value="formData.building_id" placeholder="请选择楼栋">
             <a-select-option v-for="building in buildings" :key="building.id" :value="building.id">
               {{ building.name }}
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="房间号" name="roomNumber">
-          <a-input v-model:value="formData.roomNumber" placeholder="请输入房间号" />
+        <a-form-item label="房间号" name="room_number">
+          <a-input v-model:value="formData.room_number" placeholder="请输入房间号" />
         </a-form-item>
         <a-form-item label="房间类型" name="type">
           <a-select v-model:value="formData.type" placeholder="请选择房间类型">
@@ -148,8 +149,8 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <a-tag :color="record.status === 'FREE' ? 'green' : 'red'">
-              {{ record.status === 'FREE' ? '空闲' : '已入住' }}
+            <a-tag :color="getBedStatusColor(record.status)">
+              {{ getBedStatusText(record.status) }}
             </a-tag>
           </template>
         </template>
@@ -185,6 +186,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import type { TableColumnsType, FormInstance } from 'ant-design-vue'
+import { roomApi, buildingApi } from '../../api/dormitory'
 
 // 响应式数据
 const loading = ref(false)
@@ -201,16 +203,16 @@ const studentList = ref([])
 
 // 搜索表单
 const searchForm = reactive({
-  buildingId: '',
-  roomNumber: '',
+  building_id: '',
+  room_number: '',
   type: '',
   available: '',
 })
 
 // 表单数据
 const formData = reactive({
-  buildingId: '',
-  roomNumber: '',
+  building_id: '',
+  room_number: '',
   type: 'STANDARD',
   capacity: 4,
   available: true,
@@ -241,8 +243,8 @@ const columns: TableColumnsType = [
   },
   {
     title: '房间号',
-    dataIndex: 'roomNumber',
-    key: 'roomNumber',
+    dataIndex: 'room_number',
+    key: 'room_number',
     width: 100,
   },
   {
@@ -264,14 +266,14 @@ const columns: TableColumnsType = [
   },
   {
     title: '创建时间',
-    dataIndex: 'createdAt',
-    key: 'createdAt',
+    dataIndex: 'created_at',
+    key: 'created_at',
     width: 180,
   },
   {
     title: '操作',
     key: 'action',
-    width: 200,
+    width: 280,
   },
 ]
 
@@ -279,8 +281,8 @@ const columns: TableColumnsType = [
 const bedColumns: TableColumnsType = [
   {
     title: '床位号',
-    dataIndex: 'bedCode',
-    key: 'bedCode',
+    dataIndex: 'bed_code',
+    key: 'bed_code',
   },
   {
     title: '状态',
@@ -294,7 +296,7 @@ const bedColumns: TableColumnsType = [
   },
   {
     title: '学号',
-    dataIndex: ['student', 'user', 'studentNo'],
+    dataIndex: ['student', 'user', 'student_no'],
     key: 'studentNo',
   },
 ]
@@ -308,17 +310,17 @@ const studentColumns: TableColumnsType = [
   },
   {
     title: '学号',
-    dataIndex: ['user', 'studentNo'],
+    dataIndex: ['user', 'student_no'],
     key: 'studentNo',
   },
   {
     title: '床位号',
-    dataIndex: ['bed', 'bedCode'],
+    dataIndex: ['bed', 'bed_code'],
     key: 'bedCode',
   },
   {
     title: '入住时间',
-    dataIndex: 'checkInDate',
+    dataIndex: 'check_in_date',
     key: 'checkInDate',
   },
   {
@@ -329,10 +331,10 @@ const studentColumns: TableColumnsType = [
 
 // 表单验证规则
 const formRules = {
-  buildingId: [
+  building_id: [
     { required: true, message: '请选择楼栋', trigger: 'change' },
   ],
-  roomNumber: [
+  room_number: [
     { required: true, message: '请输入房间号', trigger: 'blur' },
     { min: 1, max: 20, message: '房间号长度在 1 到 20 个字符', trigger: 'blur' },
   ],
@@ -347,59 +349,54 @@ const formRules = {
 // 方法
 const fetchBuildings = async () => {
   try {
-    // TODO: 调用API获取楼栋列表
-    // const response = await buildingApi.getList()
-    // buildings.value = response.data
-    
-    // 模拟数据
+    console.log('获取楼栋列表...')
+    const response = await buildingApi.getList()
+    console.log('楼栋API响应:', response)
+    buildings.value = response.data || []
+  } catch (error) {
+    console.error('获取楼栋列表失败:', error)
+    message.error('获取楼栋列表失败')
+    // 失败时使用模拟数据
     buildings.value = [
       { id: 1, name: '1号楼' },
       { id: 2, name: '2号楼' },
       { id: 3, name: '3号楼' },
     ]
-  } catch (error) {
-    message.error('获取楼栋列表失败')
   }
 }
 
 const fetchData = async () => {
   loading.value = true
   try {
-    // TODO: 调用API获取数据
-    // const response = await roomApi.getList({
-    //   page: pagination.current,
-    //   pageSize: pagination.pageSize,
-    //   ...searchForm,
-    // })
-    // dataSource.value = response.data
-    // pagination.total = response.total
+    // 处理搜索参数，过滤空值
+    const searchParams = Object.fromEntries(
+      Object.entries(searchForm).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+    )
     
-    // 模拟数据
-    dataSource.value = [
-      {
-        id: 1,
-        roomNumber: '101',
-        type: 'STANDARD',
-        capacity: 4,
-        currentCount: 3,
-        available: true,
-        building: { name: '1号楼' },
-        createdAt: '2024-01-01 10:00:00',
-      },
-      {
-        id: 2,
-        roomNumber: '102',
-        type: 'SUITE',
-        capacity: 2,
-        currentCount: 2,
-        available: true,
-        building: { name: '1号楼' },
-        createdAt: '2024-01-01 10:00:00',
-      },
-    ]
-    pagination.total = 2
+    const params = {
+      page: pagination.current,
+      page_size: pagination.pageSize,
+      ...searchParams,
+    }
+    
+    console.log('获取房间列表，参数:', params)
+
+    const response = await roomApi.getList(params)
+
+    console.log('房间列表API响应:', response)
+    dataSource.value = response.data || []
+    pagination.total = response.pagination?.total || response.total || 0
+
+    if (dataSource.value.length === 0 && pagination.current > 1) {
+      // 如果当前页没有数据且不是第一页，回到第一页
+      pagination.current = 1
+      fetchData()
+    }
   } catch (error) {
-    message.error('获取数据失败')
+    console.error('获取房间数据失败:', error)
+    message.error('获取房间数据失败')
+    dataSource.value = []
+    pagination.total = 0
   } finally {
     loading.value = false
   }
@@ -412,8 +409,8 @@ const handleSearch = () => {
 
 const handleReset = () => {
   Object.assign(searchForm, {
-    buildingId: '',
-    roomNumber: '',
+    building_id: '',
+    room_number: '',
     type: '',
     available: '',
   })
@@ -440,10 +437,27 @@ const showEditModal = (record: any) => {
   modalVisible.value = true
 }
 
+const initializeBeds = async (record: any) => {
+  try {
+    console.log('初始化房间床位，房间ID:', record.id)
+    const response = await roomApi.initializeBeds(record.id)
+    console.log('初始化床位API响应:', response)
+    message.success(response.message || '床位初始化成功')
+    fetchData() // 刷新房间列表
+  } catch (error: any) {
+    console.error('初始化床位失败:', error)
+    if (error.response?.data?.message) {
+      message.error(error.response.data.message)
+    } else {
+      message.error('初始化床位失败')
+    }
+  }
+}
+
 const resetForm = () => {
   Object.assign(formData, {
-    buildingId: '',
-    roomNumber: '',
+    building_id: '',
+    room_number: '',
     type: 'STANDARD',
     capacity: 4,
     available: true,
@@ -454,20 +468,26 @@ const resetForm = () => {
 const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
-    
-    // TODO: 调用API提交数据
+
+    console.log('提交房间数据:', formData)
+
     if (editingId.value) {
-      // await roomApi.update(editingId.value, formData)
+      await roomApi.update(editingId.value, formData)
       message.success('更新成功')
     } else {
-      // await roomApi.create(formData)
+      await roomApi.create(formData)
       message.success('创建成功')
     }
-    
+
     modalVisible.value = false
     fetchData()
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('提交失败:', error)
+    if (error.response?.data?.message) {
+      message.error(error.response.data.message)
+    } else {
+      message.error(editingId.value ? '更新失败' : '创建失败')
+    }
   }
 }
 
@@ -478,72 +498,111 @@ const handleCancel = () => {
 
 const handleDelete = async (id: number) => {
   try {
-    // TODO: 调用API删除数据
-    // await roomApi.delete(id)
+    console.log('删除房间，ID:', id)
+    await roomApi.delete(id)
     message.success('删除成功')
+
+    // 如果当前页删除后没有数据了，回到上一页
+    if (dataSource.value.length === 1 && pagination.current > 1) {
+      pagination.current -= 1
+    }
+
     fetchData()
-  } catch (error) {
-    message.error('删除失败')
+  } catch (error: any) {
+    console.error('删除房间失败:', error)
+    if (error.response?.data?.message) {
+      message.error(error.response.data.message)
+    } else {
+      message.error('删除失败')
+    }
   }
 }
 
 const showBeds = async (record: any) => {
   try {
-    // TODO: 调用API获取床位列表
-    // const response = await roomApi.getBeds(record.id)
-    // bedList.value = response.data
-    
-    // 模拟数据
-    bedList.value = [
-      {
-        id: 1,
-        bedCode: '1',
-        status: 'OCCUPIED',
-        student: {
-          user: {
-            name: '张三',
-            studentNo: '2021001',
-          },
-        },
-      },
-      {
-        id: 2,
-        bedCode: '2',
-        status: 'FREE',
-      },
-    ]
-    
+    console.log('获取房间床位列表，房间ID:', record.id)
+    const response = await roomApi.getBeds(record.id)
+    console.log('床位列表API响应:', response)
+
+    bedList.value = response.data || []
+
+    // 如果没有床位数据，显示提示
+    if (bedList.value.length === 0) {
+      message.info(`房间 ${record.room_number} 暂无床位数据`)
+    }
+
     bedsVisible.value = true
-  } catch (error) {
-    message.error('获取床位列表失败')
+  } catch (error: any) {
+    console.error('获取床位信息失败:', error)
+    if (error.response?.data?.message) {
+      message.error(error.response.data.message)
+    } else {
+      message.error('获取床位列表失败')
+    }
+
+    // 即使失败也显示模态框，但床位列表为空
+    bedList.value = []
+    bedsVisible.value = true
   }
 }
 
 const showStudents = async (record: any) => {
   try {
-    // TODO: 调用API获取学生列表
-    // const response = await roomApi.getStudents(record.id)
-    // studentList.value = response.data
-    
-    // 模拟数据
-    studentList.value = [
-      {
-        id: 1,
-        user: {
-          name: '张三',
-          studentNo: '2021001',
-        },
-        bed: {
-          bedCode: '1',
-        },
-        checkInDate: '2024-01-01',
-      },
-    ]
-    
+    console.log('获取房间学生列表，房间ID:', record.id)
+    const response = await roomApi.getStudents(record.id)
+    console.log('学生列表API响应:', response)
+
+    studentList.value = response.data || []
+
+    // 如果没有学生数据，显示提示
+    if (studentList.value.length === 0) {
+      message.info(`房间 ${record.room_number} 暂无入住学生`)
+    }
+
     studentsVisible.value = true
-  } catch (error) {
-    message.error('获取学生列表失败')
+  } catch (error: any) {
+    console.error('获取学生列表失败:', error)
+    if (error.response?.data?.message) {
+      message.error(error.response.data.message)
+    } else {
+      message.error('获取学生列表失败')
+    }
+
+    // 即使失败也显示模态框，但学生列表为空
+    studentList.value = []
+    studentsVisible.value = true
   }
+}
+
+// 状态转换函数
+const getBedStatusText = (status: number | string) => {
+  // 根据后端定义：0 = 空闲, 1 = 占用
+  if (typeof status === 'number') {
+    return status === 0 ? '空闲' : '已入住'
+  }
+  // 字符串格式
+  const statusMap: Record<string, string> = {
+    'FREE': '空闲',
+    'OCCUPIED': '已入住',
+    '0': '空闲',
+    '1': '已入住',
+  }
+  return statusMap[status] || '未知'
+}
+
+const getBedStatusColor = (status: number | string) => {
+  // 根据后端定义：0 = 空闲, 1 = 占用
+  if (typeof status === 'number') {
+    return status === 0 ? 'green' : 'red'
+  }
+  // 字符串格式
+  const colorMap: Record<string, string> = {
+    'FREE': 'green',
+    'OCCUPIED': 'red',
+    '0': 'green',
+    '1': 'red',
+  }
+  return colorMap[status] || 'default'
 }
 
 // 生命周期

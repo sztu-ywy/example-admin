@@ -45,6 +45,17 @@ export const routes: RouteRecordRaw[] = [
           icon: UserOutlined,
         },
       },
+      // API测试页面（开发环境）
+      {
+        path: '/test/repair-api',
+        name: 'RepairAPITest',
+        component: () => import('~/views/test/RepairAPITest.vue'),
+        meta: {
+          title: '维修工单API测试',
+          permissions: [Acl.User],
+          icon: ToolOutlined,
+        },
+      },
       // 楼栋管理
       {
         path: '/buildings',
